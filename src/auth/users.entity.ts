@@ -1,4 +1,4 @@
-import { bcrypt } from "bcrypt";
+import * as bcrypt from "bcrypt";
 import { BeforeInsert, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { UserRole } from "./roles/user-role.entity";
 
@@ -18,7 +18,7 @@ export class User {
     @Column()
     passwordHash: string;
 
-    @Column()
+    @Column({ default: UserRole.SHINY })
     roles: UserRole;
 
     @CreateDateColumn()
@@ -35,6 +35,7 @@ export class User {
     public async refreshPasswordHash(): Promise<void> {
         this.passwordHash = await bcrypt.hash(this.password, 10);
         this.password = undefined;
+        this.createdAt = new Date();
     }
 
     public isAdmin(): boolean {

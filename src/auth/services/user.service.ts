@@ -24,23 +24,23 @@ export class UserService {
             ]
         });
     }
-    public async throwExceptionIfExist(user, id): Promise<void> {
+    public async throwExceptionIfExist(user: User, id: number): Promise<void> {
         if (user.email !== undefined) {
-            const uuid = user.uuid;
+            // const uuid = user.uuid;
             const email = user.email;
             const name = user.name;
             const userExists = await this.repo
                 .createQueryBuilder()
-                .where("user.uuid = :uuid", { uuid })
-                .orWhere("user.email = :email", { email })
-                .orWhere("user.name = :name", { name })
-                .getOneOrFail();
-            if (userExists && (id == null || userExists.id !== id)) {
+                // .where("user.uuid = :uuid", { uuid })
+                .where("email = :email", { email })
+                .orWhere("name = :name", { name })
+                .getOne();
+            if (userExists && (id == null || userExists?.id !== id)) {
                 throw new ConflictException("User already exist");
             }
         }
         if (user.id !== undefined) {
-            const userExist = await this.repo.findOne(user.id);
+            const userExist = await this.repo.findOne({ where: { id: id } });
             if (userExist && (id === null || userExist.id !== id)) {
                 throw new ConflictException("User already exists");
             }

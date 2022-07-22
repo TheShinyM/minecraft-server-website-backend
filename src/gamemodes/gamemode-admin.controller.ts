@@ -1,26 +1,28 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
 import { InjectRepository } from "@nestjs/typeorm";
-import { getConnection, Repository } from "typeorm";
+import { Roles } from "src/auth/roles/roles.decorator";
+import { RolesGuard } from "src/auth/roles/roles.guard";
+import { UserRole } from "src/auth/roles/user-role.entity";
+import { Repository } from "typeorm";
 import { CreateGamemodeDTO } from "./dto/create-gamemode.dto";
 import { UpdateGamemodeDTO } from "./dto/update-gamemode.dto";
 import { Gamemode } from "./gamemodes.entity";
 
+@UseGuards(AuthGuard("jwt"), RolesGuard)
+@Roles(UserRole.ADMIN)
 @Controller("admin/gamemodes")
 export class AdminGamemodesController {
-    // public repo = new Repository<Gamemode>();
-
     public constructor(@InjectRepository(Gamemode) private reposito: Repository<Gamemode>) {}
 
     @Get()
     public async findAll(): Promise<Gamemode[]> {
-        // return this.repo.find();
-        return await this.reposito.find();
+        return await this.reposito.find({ relations: ["gameItems"] });
     }
 
     @Get(":id")
     public async findOne(@Param("id") id: number): Promise<Gamemode> {
-        // return this.repo.findOne(id);
-        return await this.reposito.findOneOrFail({ where: { id: id } });
+        return await this.reposito.findOneOrFail({ where: { id: id }, relations: ["gameItems"] });
     }
 
     @Post()
@@ -31,7 +33,10 @@ export class AdminGamemodesController {
 
     @Patch(":id")
     public async updateGamemode(@Param("id") id: number, @Body() body: UpdateGamemodeDTO) {
-        await getConnection().createQueryBuilder().update(Gamemode).set(body).where("id = :id", { id: id }).execute();
+        const gm: Gamemode = await this.reposito.findOneOrFail({ where: { id: id } });
+        if (gm) {
+            return await this.reposito.update(id, body);
+        }
     }
 
     @Delete(":id")

@@ -1,16 +1,17 @@
-import { CanActivate, InternalServerErrorException } from "@nestjs/common";
+import { CanActivate, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { User } from "../users.entity";
+import { UserRole } from "./user-role.entity";
+
+@Injectable()
 export class RolesGuard implements CanActivate {
-    private readonly reflector;
-    constructor(reflector: Reflector);
-    constructor(reflector) {
-        this.reflector = reflector;
-    }
-    canActivate(context) {
+    public constructor(private readonly reflector: Reflector) {}
+
+    public canActivate(context): boolean {
         const handlerRoles = this.makeStringArray(this.reflector.get("roles", context.getHandler()) || "");
         const classRoles = this.makeStringArray(this.reflector.get("roles", context.getClass()) || "");
         const roles = [...classRoles, ...handlerRoles];
+
         if (!roles || roles.length <= 0) {
             return true;
         }
@@ -24,15 +25,20 @@ export class RolesGuard implements CanActivate {
         }
         return user && user.roles && this.hasRole(user, roles);
     }
-    hasRole(user, roles) {
-        for (const role of user.roles) {
-            if (roles.includes(role)) {
-                return true;
-            }
+    private hasRole(user: User, roles: string[]) {
+        if (user.roles === UserRole.ADMIN) {
+            return true;
         }
+        // for (const role of user.roles) {
+        //     if (roles.includes(role)) {
+        //         return true;
+        //     }
+        // }
+
         return false;
     }
-    makeStringArray(makingString) {
+    makeStringArray(makingString: string): string[] {
+        makingString = makingString + "";
         return makingString.split(";");
     }
 }

@@ -12,17 +12,12 @@ export class RulesController {
     public async getRules(): Promise<Rules[]> {
         // let rulesString: string;
         // let rulesArray: string [] = rulesString.split(";") as string[];
-        const rules: Rules[] = await this.ruleRepo.find();
-        console.log(rules);
-
         return this.ruleRepo.find();
     }
 
     @Post()
     public async createRule(@Body() body: Partial<Rules>): Promise<Rules> {
-        console.log("came");
         const createdRule: Rules = await this.ruleRepo.create(body);
-        console.log(createdRule);
 
         return this.ruleRepo.save(createdRule);
     }
@@ -30,7 +25,6 @@ export class RulesController {
     @Patch(":id")
     public async updateRule(@Param("id") id: number, @Body() body: UpdateRuleDTO): Promise<Rules> {
         await this.ruleRepo.update(id, body);
-        console.log(body);
 
         return this.ruleRepo.findOneOrFail({ where: { id: id } });
     }
